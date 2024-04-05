@@ -39,6 +39,7 @@ extern const bool have_avx512bf16;
 #define LLAMAFILE_GPU_AMD 1
 #define LLAMAFILE_GPU_APPLE 2
 #define LLAMAFILE_GPU_NVIDIA 4
+#define LLAMAFILE_GPU_SYCL 8
 extern int FLAG_gpu;
 extern bool FLAG_tinyblas;
 extern bool FLAG_nocompile;
@@ -47,6 +48,7 @@ bool llamafile_has_gpu(void);
 int llamafile_gpu_layers(int);
 bool llamafile_has_cuda(void);
 bool llamafile_has_metal(void);
+bool llamafile_has_sycl(void);
 int llamafile_gpu_parse(const char *);
 const char *llamafile_describe_gpu(void);
 

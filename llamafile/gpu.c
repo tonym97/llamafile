@@ -17,6 +17,7 @@
 
 #include "llama.cpp/ggml-cuda.h"
 #include "llama.cpp/ggml-metal.h"
+#include "llama.cpp/ggml-sycl.h"
 #include "llamafile.h"
 #include "llamafile/log.h"
 #include <limits.h>
@@ -40,6 +41,8 @@ const char *llamafile_describe_gpu(void) {
         return "apple";
     case LLAMAFILE_GPU_NVIDIA:
         return "nvidia";
+    case LLAMAFILE_GPU_SYCL:
+        return "sycl";
     case LLAMAFILE_GPU_DISABLE:
         return "disabled";
     default:
@@ -51,7 +54,19 @@ const char *llamafile_describe_gpu(void) {
  * Returns true if GPU support is available.
  */
 bool llamafile_has_gpu(void) {
-    return llamafile_has_metal() || llamafile_has_cuda();
+    bool has_gpu = false;
+    switch (FLAG_gpu) {
+        case LLAMAFILE_GPU_AUTO:
+            has_gpu = llamafile_has_metal() || llamafile_has_cuda() || llamafile_has_sycl();
+        case LLAMAFILE_GPU_NVIDIA:
+        case LLAMAFILE_GPU_AMD:
+            has_gpu = llamafile_has_cuda();
+        case LLAMAFILE_GPU_APPLE:
+            has_gpu = llamafile_has_metal();
+        case LLAMAFILE_GPU_SYCL:
+            has_gpu = llamafile_has_sycl();
+    }
+    return has_gpu;
 }
 
 /**
@@ -94,7 +109,6 @@ int llamafile_gpu_layers(int n_gpu_layers) {
  * @return GPU configuration, or -1 if `s` is a bad value
  */
 int llamafile_gpu_parse(const char *s) {
-
     // Parse canonical names for GPUs.
     if (!strcasecmp(s, "disable"))
         return LLAMAFILE_GPU_DISABLE;
@@ -106,6 +120,8 @@ int llamafile_gpu_parse(const char *s) {
         return LLAMAFILE_GPU_APPLE;
     if (!strcasecmp(s, "nvidia"))
         return LLAMAFILE_GPU_NVIDIA;
+    if (!strcasecmp(s, "intel"))
+        return LLAMAFILE_GPU_SYCL;
 
     // Parse aliases.
     if (!strcasecmp(s, "disabled"))
@@ -120,6 +136,8 @@ int llamafile_gpu_parse(const char *s) {
         return LLAMAFILE_GPU_AMD;
     if (!strcasecmp(s, "hip"))
         return LLAMAFILE_GPU_AMD;
+    if (!strcasecmp(s, "sycl"))
+        return LLAMAFILE_GPU_SYCL;
 
     return LLAMAFILE_GPU_ERROR;
 }
